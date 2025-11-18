@@ -5,6 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CYA • Staking Ultime</title>
   <meta name="description" content="Staking CYA Token - Rewards automatiques & Gouvernance IA"/>
+
+  <!-- PWA : icône sur l'écran d'accueil (utilise ton logo GitHub) -->
+  <link rel="manifest" href="data:application/manifest+json,{
+    \"name\": \"CYA Staking\",
+    \"short_name\": \"CYA\",
+    \"description\": \"Staking CYA Token\",
+    \"start_url\": \"/\",
+    \"display\": \"standalone\",
+    \"background_color\": \"#000000\",
+    \"theme_color\": \"#00eeff\",
+    \"icons\": [
+      {\"src\": \"iHmVe2H_d.jpeg\", \"sizes\": \"192x192\", \"type\": \"image/jpeg\"},
+      {\"src\": \"iHmVe2H_d.jpeg\", \"sizes\": \"512x512\", \"type\": \"image/jpeg\"}
+    ]
+  }">
+  <link rel="apple-touch-icon" href="iHmVe2H_d.jpeg">
+  <meta name="theme-color" content="#00eeff">
+
+  <!-- Ethers v6 stable -->
   <script src="https://unpkg.com/ethers@6.13.2/dist/ethers.umd.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -19,7 +38,7 @@
     header { text-align:center; padding:60px 20px 30px; }
     .logo-img { 
       width:160px; height:160px; border-radius:50%; border:6px solid var(--cyan); 
-      box-shadow:0 0 60px rgba(0,238,255,0.9); animation:glow 3s infinite alternate; object-fit:contain;
+      box-shadow:0 0 60px rgba(0,238,255,0.9); animation:glow 3s infinite alternate; object-fit:contain; background:#000;
     }
     @keyframes glow { from { box-shadow:0 0 60px rgba(0,238,255,0.9); } to { box-shadow:0 0 90px rgba(0,238,255,1.2); } }
     h1 { 
@@ -74,8 +93,8 @@
 <body>
 
   <header>
-    <!-- TON LOGO CHARGÉ DEPUIS LE MÊME REPO GITHUB -->
-    <img src="logo.png" alt="CYA Token" class="logo-img"/>
+    <!-- TON LOGO CHARGÉ DEPUIS TON REPO GITHUB (fichier iHmVe2H_d.jpeg à la racine) -->
+    <img src="iHmVe2H_d.jpeg" alt="CYA Token" class="logo-img"/>
     <h1>CYA TOKEN</h1>
     <p class="tagline">Staking • Rewards IA • Gouvernance Décentralisée</p>
   </header>
