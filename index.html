@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CYA • Staking Ultime</title>
   <meta name="description" content="Staking CYA Token - Rewards automatiques & Gouvernance IA"/>
+  <!-- Ethers.js stable -->
+  <script src="https://unpkg.com/ethers@6.13.2/dist/ethers.umd.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <!-- ETHERS.JS FIABLE 2025 -->
-  <script src="https://unpkg.com/ethers@6.13.2/dist/ethers.umd.min.js"></script>
   <style>
     :root { --cyan:#00eeff; --purple:#c700ff; --bg:#0d0b1c; }
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -31,10 +31,10 @@
       display:block; margin:30px auto; max-width:480px; padding:22px;
       background:linear-gradient(45deg,#f0b90b,#ff9500); color:#000; font-weight:900; font-size:24px;
       border-radius:20px; text-decoration:none; text-align:center; box-shadow:0 15px 40px rgba(240,185,11,0.6);
-      animation:float 3s infinite ease-in-out;
+      animation:float 3s infinite ease-in-out; transition:0.3s;
     }
-    .buy-btn:hover { transform:scale(1.05); }
-    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .buy-btn:hover { transform:scale(1.05); box-shadow:0 20px 50px rgba(255,149,0,0.8); }
+    @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
 
     main { flex:1; max-width:520px; margin:0 auto; padding:20px; width:100%; }
     .card { 
@@ -82,7 +82,7 @@
   <main>
     <div class="card">
       <button id="connectBtn" class="btn">Connexion Wallet</button>
-      <div id="account" style="margin-top:16px; font-weight:bold; font-size:17px;">div>
+      <div id="account" style="margin-top:16px; font-weight:bold; font-size:17px;"></div>
     </div>
 
     <div id="mainPanel" style="display:none;">
@@ -118,25 +118,34 @@
     <p>© 2025 CYA Token — La Révolution IA</p>
   </footer>
 
-  <!-- SONS (facultatifs mais gardés) -->
+  <!-- Sons immersifs -->
   <audio id="sndConnect" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3"></audio>
-  <audio id="sndStake"   src="https://assets.mixkit.co/sfx/preview/mixkit-coin-win-notification-2301.mp3"></audio>
-  <audio id="sndClaim"   src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"></audio>
+  <audio id="sndStake" src="https://assets.mixkit.co/sfx/preview/mixkit-coin-win-notification-2301.mp3"></audio>
+  <audio id="sndClaim" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"></audio>
   <audio id="sndUnstake" src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3"></audio>
 
   <script>
     const CONTRACT = "0x671cb1a2c934017fc019a7a4bf11ae5a30a32354";
-    const ABI = ["function balanceOf(address) view returns (uint256)","function stakes(address) view returns (uint256)","function earned(address) view returns (uint256)","function totalStaked() view returns (uint256)","function approve(address,uint256) returns (bool)","function allowance(address,address) view returns (uint256)","function stake(uint256)","function unstake(uint256,uint256)","function claimRewards()"];
+    const ABI = [
+      "function balanceOf(address) view returns (uint256)",
+      "function stakes(address) view returns (uint256)",
+      "function earned(address) view returns (uint256)",
+      "function totalStaked() view returns (uint256)",
+      "function approve(address,uint256) returns (bool)",
+      "function allowance(address,address) view returns (uint256)",
+      "function stake(uint256)",
+      "function unstake(uint256,uint256)",
+      "function claimRewards()"
+    ];
 
     let provider, signer, contract, account;
     const sounds = {
       connect: document.getElementById("sndConnect"),
-      stake:   document.getElementById("sndStake"),
-      claim:   document.getElementById("sndClaim"),
+      stake: document.getElementById("sndStake"),
+      claim: document.getElementById("sndClaim"),
       unstake: document.getElementById("sndUnstake")
     };
-
-    function play(s) { s.currentTime=0; s.play().catch(()=>{}); }
+    function play(s) { s.currentTime = 0; s.play().catch(()=>{}); }
 
     document.getElementById("connectBtn").onclick = async () => {
       if (!window.ethereum) return alert("Ouvre ce lien dans Trust Wallet ou MetaMask !");
@@ -151,55 +160,66 @@
         document.getElementById("mainPanel").style.display = "block";
         document.getElementById("connectBtn").style.display = "none";
         play(sounds.connect);
-        updateAll(); setInterval(updateAll, 10000);
-      } catch (e) { alert("Connexion refusée ou erreur wallet"); }
+        updateAll();
+        setInterval(updateAll, 10000);
+      } catch (e) { alert("Erreur connexion : " + e.message); }
     };
 
     async function updateAll() {
-      if (!account) return;
-      const [b,s,r,t] = await Promise.all([
-        contract.balanceOf(account),
-        contract.stakes(account),
-        contract.earned(account),
-        contract.totalStaked()
-      ]);
-      document.getElementById("balance").innerText = Number(ethers.formatEther(b)).toFixed(4);
-      document.getElementById("staked").innerText   = Number(ethers.formatEther(s)).toFixed(4);
-      document.getElementById("rewards").innerText  = Number(ethers.formatEther(r)).toFixed(6);
-      document.getElementById("totalStaked").innerText = Number(ethers.formatEther(t)).toLocaleString();
+      if (!account || !contract) return;
+      try {
+        const [b,s,r,t] = await Promise.all([
+          contract.balanceOf(account),
+          contract.stakes(account),
+          contract.earned(account),
+          contract.totalStaked()
+        ]);
+        document.getElementById("balance").innerText = Number(ethers.formatEther(b)).toFixed(4);
+        document.getElementById("staked").innerText = Number(ethers.formatEther(s)).toFixed(4);
+        document.getElementById("rewards").innerText = Number(ethers.formatEther(r)).toFixed(6);
+        document.getElementById("totalStaked").innerText = Number(ethers.formatEther(t)).toLocaleString();
+      } catch (e) { console.log(e); }
     }
 
     document.getElementById("approveBtn").onclick = async () => {
       const a = document.getElementById("stakeAmount").value;
       if (!a || a <= 0) return alert("Montant ?");
-      await (await contract.approve(CONTRACT, ethers.parseEther(a))).wait();
-      alert("Approuvé !");
+      try {
+        await (await contract.approve(CONTRACT, ethers.parseEther(a))).wait();
+        alert("Approuvé !");
+      } catch (e) { alert("Erreur approve : " + e.message); }
     };
 
     document.getElementById("stakeBtn").onclick = async () => {
       const a = document.getElementById("stakeAmount").value;
       if (!a || a <= 0) return alert("Montant ?");
-      await (await contract.stake(ethers.parseEther(a))).wait();
-      alert("Staké !");
-      play(sounds.stake);
-      updateAll();
+      try {
+        await (await contract.stake(ethers.parseEther(a))).wait();
+        alert("Staké !");
+        play(sounds.stake);
+        updateAll();
+      } catch (e) { alert("Erreur stake : " + e.message); }
     };
 
     document.getElementById("unstakeBtn").onclick = async () => {
       const a = document.getElementById("unstakeAmount").value;
       if (!a || a <= 0) return alert("Montant ?");
-      const w = ethers.parseEther(a);
-      await (await contract.unstake(w, w * 99n / 100n)).wait();
-      alert("Unstaké !");
-      play(sounds.unstake);
-      updateAll();
+      try {
+        const w = ethers.parseEther(a);
+        await (await contract.unstake(w, w * 99n / 100n)).wait();
+        alert("Unstaké !");
+        play(sounds.unstake);
+        updateAll();
+      } catch (e) { alert("Erreur unstake : " + e.message); }
     };
 
     document.getElementById("claimBtn").onclick = async () => {
-      await (await contract.claimRewards()).wait();
-      alert("Rewards claimés !");
-      play(sounds.claim);
-      updateAll();
+      try {
+        await (await contract.claimRewards()).wait();
+        alert("Rewards claimés !");
+        play(sounds.claim);
+        updateAll();
+      } catch (e) { alert("Erreur claim : " + e.message); }
     };
   </script>
 </body>
