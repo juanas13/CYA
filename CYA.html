@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CYA • Staking Ultime</title>
+  <meta name="description" content="Staking CYA Token - Rewards automatiques & Gouvernance IA"/>
+  <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --cyan:#00eeff; --purple:#c700ff; --bg:#0d0b1c; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { 
+      font-family:'Inter',sans-serif; background:var(--bg); color:#fff; 
+      min-height:100vh; display:flex; flex-direction:column; overflow-x:hidden;
+      background: radial-gradient(circle at 50% 0%, #1a0033 0%, #000 70%);
+    }
+    header { text-align:center; padding:60px 20px 30px; position:relative; }
+    h1 { 
+      font-family:'Orbitron',sans-serif; font-size:52px; 
+      background:linear-gradient(90deg,var(--cyan),var(--purple),var(--cyan));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      animation:glowText 3s infinite alternate;
+    }
+    @keyframes glowText { from { filter:drop-shadow(0 0 20px var(--cyan)); } to { filter:drop-shadow(0 0 40px var(--purple)); } }
+    .tagline { font-size:20px; color:#a0f0ff; margin-top:10px; opacity:0.9; }
+
+    /* Bouton ACHETER ultra visible */
+    .buy-btn {
+      display:block; margin:30px auto; max-width:480px; padding:22px;
+      background:linear-gradient(45deg,#f0b90b,#ff9500); color:#000; font-weight:900; font-size:24px;
+      border-radius:20px; text-decoration:none; text-align:center; box-shadow:0 15px 40px rgba(240,185,11,0.6);
+      animation:float 3s infinite ease-in-out; transition:0.3s;
+    }
+    .buy-btn:hover { transform:scale(1.05); box-shadow:0 20px 50px rgba(255,149,0,0.8); }
+    @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
+
+    main { flex:1; max-width:520px; margin:0 auto; padding:20px; width:100%; }
+    .card { 
+      background:rgba(15,15,40,0.7); backdrop-filter:blur(16px); border:2px solid transparent;
+      background-clip:padding-box; border-radius:24px; padding:28px; margin:20px 0;
+      box-shadow:0 20px 50px rgba(0,238,255,0.15); transition:all 0.4s;
+    }
+    .card:hover { transform:translateY(-8px); box-shadow:0 30px 70px rgba(0,238,255,0.3); border-color:rgba(0,238,255,0.4); }
+
+    .btn {
+      background:linear-gradient(45deg,var(--cyan),var(--purple)); color:#fff; border:none;
+      padding:18px; border-radius:18px; font-size:18px; font-weight:700; cursor:pointer; width:100%;
+      margin:12px 0; box-shadow:0 10px 30px rgba(0,238,255,0.4); transition:0.3s; position:relative; overflow:hidden;
+    }
+    .btn::after { content:""; position:absolute; top:50%; left:50%; width:0; height:0; background:rgba(255,255,255,0.3); border-radius:50%; transform:translate(-50%,-50%); transition:0.6s; }
+    .btn:active::after { width:300px; height:300px; }
+    .btn:hover { transform:scale(1.04); box-shadow:0 15px 40px rgba(199,0,255,0.6); }
+
+    input {
+      width:100%; padding:18px; margin:12px 0; background:#111118; border:2px solid var(--cyan);
+      border-radius:18px; color:#fff; font-size:18px; text-align:center; transition:0.3s;
+    }
+    input:focus { outline:none; border-color:var(--purple); box-shadow:0 0 30px rgba(199,0,255,0.5); }
+
+    .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:25px 0; }
+    .info-box { background:rgba(0,238,255,0.1); padding:20px; border-radius:16px; text-align:center; border:1px solid rgba(0,238,255,0.3); }
+    .value { font-size:26px; font-weight:900; color:var(--cyan); }
+
+    footer { text-align:center; padding:40px 20px; font-size:14px; opacity:0.8; }
+    .social-btn { background:#1da1f2; padding:14px 30px; border-radius:50px; text-decoration:none; color:#fff; font-weight:bold; }
+
+    @media (max-width:600px) { .info-grid { grid-template-columns:1fr; } h1 { font-size:42px; } }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>CYA TOKEN</h1>
+    <p class="tagline">Staking • Rewards IA • Gouvernance Décentralisée</p>
+  </header>
+
+  <!-- BOUTON ACHETER / TRADER -->
+  <a href="https://pancakeswap.finance/swap?outputCurrency=0x671cb1a2c934017fc019a7a4bf11ae5a30a32354&inputCurrency=BNB" 
+     target="_blank" class="buy-btn">
+     ACHETER CYA SUR PANCAKESWAP
+  </a>
+
+  <main>
+    <div class="card">
+      <button id="connectBtn" class="btn">Connexion Wallet</button>
+      <div id="account" style="margin-top:16px; font-weight:bold; font-size:17px;"></div>
+    </div>
+
+    <div id="mainPanel" style="display:none;">
+      <div class="info-grid">
+        <div class="info-box"><div class="label">Balance</div><div class="value" id="balance">0.0000</div> CYA</div>
+        <div class="info-box"><div class="label">Staké</div><div class="value" id="staked">0.0000</div> CYA</div>
+        <div class="info-box"><div class="label">Rewards</div><div class="value" id="rewards">0.000000</div> CYA</div>
+        <div class="info-box"><div class="label">Total Staké</div><div class="value" id="totalStaked">0</div> CYA</div>
+      </div>
+
+      <div class="card">
+        <h3 style="color:var(--cyan); margin-bottom:20px;">Staker tes CYA</h3>
+        <input type="number" step="any" id="stakeAmount" placeholder="Montant à staker"/>
+        <button id="approveBtn" class="btn">Approuver le montant</button>
+        <button id="stakeBtn" class="btn">Staker maintenant</button>
+      </div>
+
+      <div class="card">
+        <h3 style="color:var(--cyan); margin-bottom:20px;">Retirer</h3>
+        <input type="number" step="any" id="unstakeAmount" placeholder="Montant à retirer"/>
+        <button id="unstakeBtn" class="btn">Unstaker (1% pénalité si <7j)</button>
+      </div>
+
+      <div class="card">
+        <button id="claimBtn" class="btn">Claim mes Rewards</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Contrat : 0x671cb1a2c934017fc019a7a4bf11ae5a30a32354</p>
+    <a href="https://x.com/CryptoTokenIa" target="_blank" class="social-btn">@CryptoTokenIa</a>
+    <p>© 2025 CYA Token — La Révolution IA</p>
+  </footer>
+
+  <!-- SONS IMMERSIFS (pas de blocage navigateur) -->
+  <audio id="sndConnect" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3" preload="auto"></audio>
+  <audio id="sndStake"   src="https://assets.mixkit.co/sfx/preview/mixkit-coin-win-notification-2301.mp3" preload="auto"></audio>
+  <audio id="sndClaim"   src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" preload="auto"></audio>
+  <audio id="sndUnstake" src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3" preload="auto"></audio>
+
+  <script>
+    const CONTRACT = "0x671cb1a2c934017fc019a7a4bf11ae5a30a32354";
+    const ABI = ["function balanceOf(address) view returns (uint256)","function stakes(address) view returns (uint256)","function earned(address) view returns (uint256)","function totalStaked() view returns (uint256)","function approve(address,uint256) returns (bool)","function allowance(address,address) view returns (uint256)","function stake(uint256)","function unstake(uint256,uint256)","function claimRewards()"];
+
+    let provider, signer, contract, account;
+    const sounds = {
+      connect: document.getElementById("sndConnect"),
+      stake:   document.getElementById("sndStake"),
+      claim:   document.getElementById("sndClaim"),
+      unstake: document.getElementById("sndUnstake")
+    };
+
+    function play(sound) { sound.currentTime=0; sound.play().catch(()=>{}); }
+
+    document.getElementById("connectBtn").onclick = async () => {
+      if (!window.ethereum) return alert("MetaMask / Trust Wallet requis !");
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner(); account = await signer.getAddress();
+      contract = new ethers.Contract(CONTRACT, ABI, signer);
+      document.getElementById("account").innerHTML = `Connecté : ${account.slice(0,8)}...${account.slice(-6)}`;
+      document.getElementById("mainPanel").style.display = "block";
+      document.getElementById("connectBtn").style.display = "none";
+      play(sounds.connect);
+      updateAll(); setInterval(updateAll, 10000);
+    };
+
+    async function updateAll() {
+      if (!account) return;
+      const [b,s,r,t] = await Promise.all([
+        contract.balanceOf(account),
+        contract.stakes(account),
+        contract.earned(account),
+        contract.totalStaked()
+      ]);
+      document.getElementById("balance").innerText = Number(ethers.utils.formatEther(b)).toFixed(4);
+      document.getElementById("staked").innerText   = Number(ethers.utils.formatEther(s)).toFixed(4);
+      document.getElementById("rewards").innerText  = Number(ethers.utils.formatEther(r)).toFixed(6);
+      document.getElementById("totalStaked").innerText = Number(ethers.utils.formatEther(t)).toLocaleString();
+    }
+
+    document.getElementById("approveBtn").onclick = async () => {
+      const a = document.getElementById("stakeAmount").value;
+      if (!a || a <= 0) return alert("Entre un montant !");
+      await (await contract.approve(CONTRACT, ethers.utils.parseEther(a))).wait();
+      alert("Approuvé !");
+    };
+
+    document.getElementById("stakeBtn").onclick = async () => {
+      const a = document.getElementById("stakeAmount").value;
+      if (!a || a <= 0) return alert("Entre un montant !");
+      await (await contract.stake(ethers.utils.parseEther(a))).wait();
+      alert("Staké avec succès !");
+      play(sounds.stake);
+      updateAll();
+    };
+
+    document.getElementById("unstakeBtn").onclick = async () => {
+      const a = document.getElementById("unstakeAmount").value;
+      if (!a || a <= 0) return alert("Entre un montant !");
+      const w = ethers.utils.parseEther(a);
+      await (await contract.unstake(w, w.mul(99).div(100))).wait();
+      alert("Unstaké !");
+      play(sounds.unstake);
+      updateAll();
+    };
+
+    document.getElementById("claimBtn").onclick = async () => {
+      await (await contract.claimRewards()).wait();
+      alert("Rewards claimés !");
+      play(sounds.claim);
+      updateAll();
+    };
+  </script>
+</body>
+</html>
